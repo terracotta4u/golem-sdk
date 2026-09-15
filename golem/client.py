@@ -10,7 +10,9 @@ from typing import Any, Iterator
 
 
 class GolemError(Exception):
-    pass
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 @dataclass(frozen=True)
@@ -76,7 +78,10 @@ class Client:
                         return
         except urllib.error.HTTPError as exc:
             raw = exc.read()
-            raise GolemError(f"unexpected status {exc.code}: {raw.decode(errors='replace')}") from exc
+            raise GolemError(
+                f"unexpected status {exc.code}: {raw.decode(errors='replace')}",
+                status=exc.code,
+            ) from exc
         except urllib.error.URLError as exc:
             raise GolemError(f"request failed: {exc.reason}") from exc
         except json.JSONDecodeError as exc:
@@ -90,6 +95,20 @@ class Client:
             if ev.name == "error":
                 raise GolemError(str(ev.data.get("error") or "turn failed"))
         raise GolemError("turn ended without done")
+
+    def register(self, name: str, callback_url: str, capabilities: list[dict[str, Any]]) -> None:
+        body = self._request(
+            "POST",
+            "/v1/extensions/register",
+            {"name": name, "callback_url": callback_url, "capabilities": capabilities},
+        )
+        if not isinstance(body, dict) or not body.get("ok"):
+            raise GolemError("register failed")
+
+    def heartbeat(self, name: str) -> None:
+        body = self._request("POST", "/v1/extensions/heartbeat", {"name": name})
+        if not isinstance(body, dict) or not body.get("ok"):
+            raise GolemError("heartbeat failed")
 
     def _headers(self, body: dict[str, Any] | None = None) -> dict[str, str]:
         headers: dict[str, str] = {}
@@ -115,7 +134,10 @@ class Client:
                 raw = resp.read()
         except urllib.error.HTTPError as exc:
             raw = exc.read()
-            raise GolemError(f"unexpected status {exc.code}: {raw.decode(errors='replace')}") from exc
+            raise GolemError(
+                f"unexpected status {exc.code}: {raw.decode(errors='replace')}",
+                status=exc.code,
+            ) from exc
         except urllib.error.URLError as exc:
             raise GolemError(f"request failed: {exc.reason}") from exc
         if not raw:
