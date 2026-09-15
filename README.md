@@ -2,7 +2,13 @@
 
 Python SDK for [Golem](https://github.com/terracotta4u/golem) extensions (channels, providers, and other long-running processes).
 
-Install from this directory:
+Install from PyPI:
+
+```sh
+uv add golem-agent-sdk
+```
+
+Or from this directory:
 
 ```sh
 uv sync --dev

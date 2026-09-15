@@ -1,5 +1,5 @@
 [project]
-name = "golem-sdk"
+name = "golem-agent-sdk"
 version = "0.1.0"
 description = "Python SDK for Golem extensions"
 readme = "README.md"
