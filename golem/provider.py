@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -154,11 +154,11 @@ class JSONSchema:
 class Provider(ABC):
     """Model backend Golem calls for chat, structured output, or embeddings.
 
-    Implement ``chat``. Override ``chat_structured`` and ``embed`` to advertise
-    those routes when this instance is passed to ``Extension.provider``.
+    Implement at least one of ``chat``, ``chat_structured``, or ``embed``.
+    Overridden methods are advertised when this instance is passed to
+    ``Extension.provider``.
     """
 
-    @abstractmethod
     def chat(
         self, model: str, messages: list[Message], tools: list[ToolDef] | None = None
     ) -> Message:
@@ -171,6 +171,10 @@ class Provider(ABC):
 
         Returns:
             Assistant message. May include ``tool_calls`` instead of text.
+
+        Raises:
+            NotImplementedError: Default if this provider does not support
+                chat. Override to advertise the route.
         """
         raise NotImplementedError
 

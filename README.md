@@ -32,7 +32,7 @@ Extension.from_env("echo").task(hello).run()
 
 ### Provider Extensions
 
-A provider is a model backend. Golem calls your process for chat (and optionally structured output or embeddings). `run()` binds a loopback callback, registers, and heartbeats.
+A provider is a model backend. Golem calls your process for chat, structured output, and/or embeddings. Implement at least one of those methods; `run()` binds a loopback callback, registers, and heartbeats.
 
 ```python
 from golem import Extension, Message, Provider
@@ -46,7 +46,16 @@ class Echo(Provider):
 Extension.from_env("golem-echo").provider("echo", Echo()).run()
 ```
 
-The `id` passed to `provider()` is the name used in Golem's `default_model.provider`. Override `chat_structured` or `embed` to advertise those routes.
+The `id` passed to `provider()` is the name used in Golem conf (`default_model.provider` or `memory.embedding.provider`). Override `chat_structured` or `embed` to advertise those routes. An embeddings-only class can omit `chat`:
+
+```python
+class Embed(Provider):
+    def embed(self, model, texts):
+        return [[0.1] for _ in texts]
+
+
+Extension.from_env("golem-embed").provider("local-embed", Embed()).run()
+```
 
 ### Channel Extensions
 

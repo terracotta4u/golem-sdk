@@ -121,6 +121,15 @@ class ChatOnly(Provider):
         return Message(role="assistant", content=model)
 
 
+class EmbedOnly(Provider):
+    def embed(self, model: str, texts: list[str]) -> list[list[float]]:
+        return [[float(len(t))] for t in texts]
+
+
+class EmptyProvider(Provider):
+    pass
+
+
 def _start(ext: Extension, stop: threading.Event) -> threading.Thread:
     thread = threading.Thread(target=ext.run, kwargs={"stop": stop}, daemon=True)
     thread.start()
@@ -317,6 +326,47 @@ def test_task_and_extra_capability(golem: _Golem) -> None:
         reg = _wait_registered(golem)
         assert reg["capabilities"] == [{"kind": "widget", "id": "w1"}]
         assert ran.wait(timeout=2)
+    finally:
+        _stop(thread, stop)
+
+
+def test_provider_requires_a_route() -> None:
+    with pytest.raises(ValueError, match="chat, chat_structured, or embed"):
+        Extension("golem-embed", "http://127.0.0.1:9").provider("embed", EmptyProvider())
+
+
+def test_embed_only_omits_chat(golem: _Golem) -> None:
+    stop = threading.Event()
+    ext = Extension(
+        "golem-embed", golem.url, golem.token, heartbeat_interval=0.05
+    ).provider("local-embed", EmbedOnly())
+    thread = _start(ext, stop)
+    try:
+        reg = _wait_registered(golem)
+        cap = reg["capabilities"][0]
+        assert cap["kind"] == "provider"
+        assert cap["id"] == "local-embed"
+        assert cap["embed"] is True
+        assert "chat" not in cap
+        assert "structured" not in cap
+
+        status, body = _callback_post(
+            reg["callback_url"],
+            "/v1/embed",
+            golem.token,
+            {"model": "nomic-embed-text", "texts": ["hi", "yo"]},
+        )
+        assert status == 200
+        assert body == {"vectors": [[2.0], [2.0]]}
+
+        status, body = _callback_post(
+            reg["callback_url"],
+            "/v1/chat",
+            golem.token,
+            {"model": "m", "messages": [{"role": "user", "content": "hi"}]},
+        )
+        assert status == 404
+        assert "error" in body
     finally:
         _stop(thread, stop)
 

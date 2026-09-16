@@ -77,24 +77,34 @@ class Extension:
         return cls(name, Client.from_env(), **kwargs)
 
     def provider(self, provider_id: str, impl: Provider) -> Extension:
-        """Attach a model backend. Golem will POST chat (and optional routes).
+        """Attach a model backend. Golem will POST the advertised routes.
 
         Args:
-            provider_id: Name used in Golem conf ``default_model.provider``.
-            impl: Provider implementation. Override ``chat_structured`` or
-                ``embed`` to advertise those routes.
+            provider_id: Name used in Golem conf (``default_model.provider``
+                or ``memory.embedding.provider``).
+            impl: Provider implementation. Override ``chat``,
+                ``chat_structured``, and/or ``embed`` to advertise those
+                routes. At least one is required.
 
         Returns:
             This extension, for chaining.
 
         Raises:
-            ValueError: ``provider_id`` is empty or a provider is already set.
+            ValueError: ``provider_id`` is empty, a provider is already set,
+                or ``impl`` overrides none of the routes.
         """
         provider_id = provider_id.strip()
         if not provider_id:
             raise ValueError("provider id is required")
         if self._provider is not None:
             raise ValueError("provider already set")
+        if not any(
+            _overrides(impl, method)
+            for method in ("chat", "chat_structured", "embed")
+        ):
+            raise ValueError(
+                "provider must implement chat, chat_structured, or embed"
+            )
         self._provider_id = provider_id
         self._provider = impl
         return self
@@ -215,8 +225,9 @@ class Extension:
             cap: dict[str, Any] = {
                 "kind": "provider",
                 "id": self._provider_id,
-                "chat": True,
             }
+            if _overrides(self._provider, "chat"):
+                cap["chat"] = True
             if _overrides(self._provider, "chat_structured"):
                 cap["structured"] = True
             if _overrides(self._provider, "embed"):
