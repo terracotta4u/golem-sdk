@@ -5,8 +5,9 @@ import os
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Iterator
+from typing import Any
 
 
 class GolemError(Exception):
@@ -83,7 +84,7 @@ class Client:
                 if body.get("ok"):
                     return
                 last = GolemError("golem health not ok")
-            except Exception as exc:
+            except (OSError, GolemError) as exc:
                 last = exc
             time.sleep(0.4)
         if last is None:
@@ -274,9 +275,7 @@ def _read_sse(resp: Any) -> Iterator[tuple[str, str]]:
         if text.startswith("event:"):
             event = text[6:].lstrip()
         elif text.startswith("data:"):
-            value = text[5:]
-            if value.startswith(" "):
-                value = value[1:]
+            value = text[5:].removeprefix(" ")
             data.append(value)
     if data:
         yield event, "\n".join(data)

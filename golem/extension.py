@@ -4,9 +4,10 @@ import json
 import signal
 import sys
 import threading
+from collections.abc import Callable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import FrameType
-from typing import Any, Callable
+from typing import Any
 
 from golem.client import Client, GolemError
 from golem.provider import JSONSchema, Message, Provider, ToolDef, UnsupportedFormat
@@ -213,7 +214,7 @@ class Extension:
     def _run_task(self, fn: Task, stop: threading.Event) -> None:
         try:
             fn(self.client, stop)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             print(f"{self.name} task: {exc}", file=sys.stderr, flush=True)
 
     def _capabilities(self) -> list[dict[str, Any]]:
@@ -262,7 +263,7 @@ class Extension:
             }
         except NotImplementedError:
             return 404, _error("not found")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             return 500, _error(str(exc))
         return 404, _error("not found")
 
