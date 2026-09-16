@@ -332,7 +332,9 @@ def test_task_and_extra_capability(golem: _Golem) -> None:
 
 def test_provider_requires_a_route() -> None:
     with pytest.raises(ValueError, match="chat, chat_structured, or embed"):
-        Extension("golem-embed", "http://127.0.0.1:9").provider("embed", EmptyProvider())
+        Extension("golem-embed", "http://127.0.0.1:9").provider(
+            "embed", EmptyProvider()
+        )
 
 
 def test_embed_only_omits_chat(golem: _Golem) -> None:

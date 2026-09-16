@@ -99,12 +99,9 @@ class Extension:
         if self._provider is not None:
             raise ValueError("provider already set")
         if not any(
-            _overrides(impl, method)
-            for method in ("chat", "chat_structured", "embed")
+            _overrides(impl, method) for method in ("chat", "chat_structured", "embed")
         ):
-            raise ValueError(
-                "provider must implement chat, chat_structured, or embed"
-            )
+            raise ValueError("provider must implement chat, chat_structured, or embed")
         self._provider_id = provider_id
         self._provider = impl
         return self
