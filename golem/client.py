@@ -176,7 +176,9 @@ class Client:
                 raise GolemError(str(ev.data.get("error") or "turn failed"))
         raise GolemError("turn ended without done")
 
-    def register(self, name: str, callback_url: str, capabilities: list[dict[str, Any]]) -> None:
+    def register(
+        self, name: str, callback_url: str, capabilities: list[dict[str, Any]]
+    ) -> None:
         """Register this process with Golem.
 
         ``Extension.run`` calls this. Use it directly only if you bind your
@@ -221,7 +223,9 @@ class Client:
             headers["Content-Type"] = "application/json"
         return headers
 
-    def _request(self, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
+    def _request(
+        self, method: str, path: str, body: dict[str, Any] | None = None
+    ) -> Any:
         data = None
         headers = self._headers(body)
         if body is not None:

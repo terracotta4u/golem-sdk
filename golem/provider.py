@@ -89,7 +89,10 @@ class Message:
                 {
                     "id": call.id,
                     "type": call.type,
-                    "function": {"name": call.function.name, "arguments": call.function.arguments},
+                    "function": {
+                        "name": call.function.name,
+                        "arguments": call.function.arguments,
+                    },
                 }
                 for call in self.tool_calls
             ]
@@ -156,7 +159,9 @@ class Provider(ABC):
     """
 
     @abstractmethod
-    def chat(self, model: str, messages: list[Message], tools: list[ToolDef] | None = None) -> Message:
+    def chat(
+        self, model: str, messages: list[Message], tools: list[ToolDef] | None = None
+    ) -> Message:
         """Run one chat completion.
 
         Args:
@@ -169,7 +174,9 @@ class Provider(ABC):
         """
         raise NotImplementedError
 
-    def chat_structured(self, model: str, messages: list[Message], schema: JSONSchema) -> Any:
+    def chat_structured(
+        self, model: str, messages: list[Message], schema: JSONSchema
+    ) -> Any:
         """Return a JSON value that matches ``schema``.
 
         Args:

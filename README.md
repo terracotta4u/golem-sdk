@@ -19,9 +19,11 @@ The smallest extension registers, prints a line, and stays alive until it is sto
 ```python
 from golem import Extension
 
+
 def hello(client, stop):
     print("hello world")
     stop.wait()
+
 
 Extension.from_env("echo").task(hello).run()
 ```
@@ -35,9 +37,11 @@ A provider is a model backend. Golem calls your process for chat (and optionally
 ```python
 from golem import Extension, Message, Provider
 
+
 class Echo(Provider):
     def chat(self, model, messages, tools=None) -> Message:
         return Message(role="assistant", content=messages[-1].content)
+
 
 Extension.from_env("golem-echo").provider("echo", Echo()).run()
 ```
@@ -51,12 +55,14 @@ A channel feeds messages into Golem (Telegram, CLI, and so on). `task()` runs yo
 ```python
 from golem import Extension
 
+
 def cli(client, stop):
     while not stop.is_set():
         line = input("you: ").strip()
         if not line:
             continue
         print(client.send("local", "cli", line))
+
 
 (
     Extension.from_env("golem-cli")

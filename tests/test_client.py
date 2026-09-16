@@ -50,7 +50,15 @@ class _Handler(BaseHTTPRequestHandler):
             if turn_id == "turn-1":
                 self._write_sse(
                     [
-                        ("log", {"line": "[read] {}", "name": "read", "args": "{}", "result": "ok"}),
+                        (
+                            "log",
+                            {
+                                "line": "[read] {}",
+                                "name": "read",
+                                "args": "{}",
+                                "result": "ok",
+                            },
+                        ),
                         ("done", {"text": "hello back"}),
                     ]
                 )
@@ -98,7 +106,9 @@ def test_post_turn_and_stream(golem_url: str) -> None:
     turn_id = client.post_turn("chat-1", "telegram", "hello")
     assert turn_id == "turn-1"
     events = list(client.stream_turn(turn_id))
-    assert events[0] == TurnEvent("log", {"line": "[read] {}", "name": "read", "args": "{}", "result": "ok"})
+    assert events[0] == TurnEvent(
+        "log", {"line": "[read] {}", "name": "read", "args": "{}", "result": "ok"}
+    )
     assert events[1] == TurnEvent("done", {"text": "hello back"})
 
 

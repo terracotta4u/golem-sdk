@@ -144,6 +144,7 @@ class Extension:
         if stop is None:
             stop = threading.Event()
             if threading.current_thread() is threading.main_thread():
+
                 def handle(_signum: int, _frame: FrameType | None) -> None:
                     stop.set()
 
@@ -176,10 +177,16 @@ class Extension:
         else:
             return
 
-        print(f"{self.name}: {callback} → {self.client.url}", file=sys.stderr, flush=True)
-        threading.Thread(target=self._heartbeat_loop, args=(callback, stop), daemon=True).start()
+        print(
+            f"{self.name}: {callback} → {self.client.url}", file=sys.stderr, flush=True
+        )
+        threading.Thread(
+            target=self._heartbeat_loop, args=(callback, stop), daemon=True
+        ).start()
         for fn in self._tasks:
-            threading.Thread(target=self._run_task, args=(fn, stop), daemon=True).start()
+            threading.Thread(
+                target=self._run_task, args=(fn, stop), daemon=True
+            ).start()
         stop.wait()
 
     def _register(self, callback: str) -> None:
@@ -205,7 +212,11 @@ class Extension:
     def _capabilities(self) -> list[dict[str, Any]]:
         caps: list[dict[str, Any]] = []
         if self._provider is not None:
-            cap: dict[str, Any] = {"kind": "provider", "id": self._provider_id, "chat": True}
+            cap: dict[str, Any] = {
+                "kind": "provider",
+                "id": self._provider_id,
+                "chat": True,
+            }
             if _overrides(self._provider, "chat_structured"):
                 cap["structured"] = True
             if _overrides(self._provider, "embed"):
@@ -224,7 +235,9 @@ class Extension:
                 return 200, msg.to_dict()
             if path == "/v1/chat/structured":
                 raw = body.get("schema") if isinstance(body.get("schema"), dict) else {}
-                data = self._provider.chat_structured(model, _messages(body), JSONSchema.from_dict(raw))
+                data = self._provider.chat_structured(
+                    model, _messages(body), JSONSchema.from_dict(raw)
+                )
                 return 200, {"data": data}
             if path == "/v1/embed":
                 texts = body.get("texts") or []
@@ -233,7 +246,12 @@ class Extension:
                 vectors = self._provider.embed(model, [str(t) for t in texts])
                 return 200, {"vectors": vectors}
         except UnsupportedFormat as exc:
-            return 400, {"error": {"code": "unsupported_format", "message": str(exc) or "no json schema"}}
+            return 400, {
+                "error": {
+                    "code": "unsupported_format",
+                    "message": str(exc) or "no json schema",
+                }
+            }
         except NotImplementedError:
             return 404, _error("not found")
         except Exception as exc:
