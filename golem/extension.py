@@ -15,6 +15,18 @@ Task = Callable[[Client, threading.Event], None]
 
 
 class Extension:
+    """A Golem extension process: register, heartbeat, and optional callbacks.
+
+    Chain ``provider``, ``capability``, and ``task``, then call ``run``.
+    ``run`` binds a loopback HTTP server, registers with Golem, and blocks
+    until SIGINT/SIGTERM or the optional ``stop`` event.
+
+    Attributes:
+        name: Extension name sent on register and heartbeat.
+        client: Client used to talk to Golem.
+        heartbeat_interval: Seconds between heartbeats.
+    """
+
     def __init__(
         self,
         name: str,
@@ -23,6 +35,20 @@ class Extension:
         *,
         heartbeat_interval: float = 10.0,
     ) -> None:
+        """Create an extension.
+
+        Args:
+            name: Extension name. Must match the installed package name.
+            client: A ``Client``, a Golem base URL string, or ``None`` to
+                use ``Client.from_env``.
+            token: Bearer token when ``client`` is a URL string. Ignored
+                otherwise.
+            heartbeat_interval: Seconds between heartbeats. Keep this well
+                under Golem's 30s registration TTL.
+
+        Raises:
+            ValueError: ``name`` is empty.
+        """
         name = name.strip()
         if not name:
             raise ValueError("name is required")
@@ -41,9 +67,29 @@ class Extension:
 
     @classmethod
     def from_env(cls, name: str, **kwargs: Any) -> Extension:
+        """Build an extension using ``GOLEM_URL`` and ``GOLEM_TOKEN``.
+
+        Args:
+            name: Extension name. Must match the installed package name.
+            **kwargs: Forwarded to ``Extension``, typically
+                ``heartbeat_interval``.
+        """
         return cls(name, Client.from_env(), **kwargs)
 
     def provider(self, provider_id: str, impl: Provider) -> Extension:
+        """Attach a model backend. Golem will POST chat (and optional routes).
+
+        Args:
+            provider_id: Name used in Golem conf ``default_model.provider``.
+            impl: Provider implementation. Override ``chat_structured`` or
+                ``embed`` to advertise those routes.
+
+        Returns:
+            This extension, for chaining.
+
+        Raises:
+            ValueError: ``provider_id`` is empty or a provider is already set.
+        """
         provider_id = provider_id.strip()
         if not provider_id:
             raise ValueError("provider id is required")
@@ -54,14 +100,46 @@ class Extension:
         return self
 
     def capability(self, cap: dict[str, Any]) -> Extension:
+        """Advertise an extra capability at register time.
+
+        Use this for channels and other kinds Golem stores but does not
+        call as a provider.
+
+        Args:
+            cap: Capability object, for example
+                ``{"kind": "channel", "id": "cli"}``.
+
+        Returns:
+            This extension, for chaining.
+        """
         self._extra_caps.append(cap)
         return self
 
     def task(self, fn: Task) -> Extension:
+        """Run ``fn`` in a background thread after a successful register.
+
+        Args:
+            fn: ``fn(client, stop)``. Block on ``stop.wait()`` until Golem
+                shuts the process down. ``client`` is this extension's
+                ``Client``.
+
+        Returns:
+            This extension, for chaining.
+        """
         self._tasks.append(fn)
         return self
 
     def run(self, stop: threading.Event | None = None) -> None:
+        """Bind a loopback server, register, heartbeat, and block.
+
+        Listens on ``127.0.0.1`` with an OS-assigned port, registers that
+        URL with Golem, then waits until ``stop`` is set. If ``stop`` is
+        omitted, SIGINT and SIGTERM set it (main thread only).
+
+        Args:
+            stop: Optional event to end the process. Created automatically
+                when omitted.
+        """
         own_stop = stop is None
         if stop is None:
             stop = threading.Event()
