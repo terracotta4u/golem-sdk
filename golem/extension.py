@@ -185,9 +185,6 @@ class Extension:
         else:
             return
 
-        print(
-            f"{self.name}: {callback} → {self.client.url}", file=sys.stderr, flush=True
-        )
         threading.Thread(
             target=self._heartbeat_loop, args=(callback, stop), daemon=True
         ).start()
