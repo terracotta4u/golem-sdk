@@ -1,18 +1,16 @@
-# golem-sdk
+# Golem SDK
 
-Python SDK for [Golem](https://github.com/terracotta4u/golem) extensions (channels, providers, and other long-running processes).
+Python SDK for creating [Golem](https://github.com/terracotta4u/golem) extensions. This includes adding new channels, providers, and other long-running processes.
 
-Install from PyPI:
+## Installation
 
-```sh
-uv add golem-agent-sdk
+This package is available on PyPI:
+
+```bash
+pip install golem-agent-sdk
 ```
 
-Or from this directory:
-
-```sh
-uv sync --dev
-```
+## Usage
 
 Import as `golem`. The wire protocol lives in Golem: [docs/extensions.md](https://github.com/terracotta4u/golem/blob/main/docs/extensions.md).
 
@@ -40,9 +38,11 @@ Extension.from_env("golem-echo").provider("echo", Echo()).run()
 
 `task()` runs your own loop (a channel). `capability()` registers kinds Golem does not call.
 
-## Develop
+## Development
 
-```sh
+Using uv is strongly recommended:
+
+```bash
 uv sync --dev
 uv run pytest
 ```
