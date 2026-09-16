@@ -24,7 +24,4 @@ __all__ = [
     "ToolDef",
     "TurnEvent",
     "UnsupportedFormat",
-    "__version__",
 ]
-
-__version__ = "0.1.0"
